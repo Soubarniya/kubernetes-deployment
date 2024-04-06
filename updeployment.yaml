@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodejsapp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nodejs
+  template:
+    metadata:
+      labels:
+        app: nodejs
+    spec:
+      containers:
+      - name: mycontainer
+        image: soubarniya/nodejs:latest
+        ports:
+        - containerPort: 3000
+        resources:
+          requests:
+            memory: "120Mi"
+            cpu: "500m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        env:
+        - name: NODE_ENV
+          value: production

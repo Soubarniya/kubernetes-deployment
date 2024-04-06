@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodejsapp
+spec:
+  replicas: 3   # Number of replicas for high availability
+  selector:
+    matchLabels:
+      app: nodejs
+  template:
+    metadata:
+      labels:
+        app: nodejs
+    spec:
+      containers:
+      - name: mycontainer
+        image: soubarniya/nodejs:latest  # Replace with your Docker image path
+        ports:
+        - containerPort: 3000   # Port your Node.js application listens on
+        resources:
+          requests:
+            memory: "64Mi"    # Requested memory for each pod
+            cpu: "250m"       # Requested CPU for each pod
+          limits:
+            memory: "128Mi"   # Maximum memory for each pod
+            cpu: "500m"       # Maximum CPU for each pod
+        env:
+        - name: NODE_ENV
+          value: production   # Environment variable for Node.js environment

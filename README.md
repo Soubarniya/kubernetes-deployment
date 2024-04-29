@@ -56,59 +56,96 @@ Success Criteria:
 
 ● Successful execution of the load test with a recorded screencast demonstrating scaling behavior.#Documentation
 
-Build the Docker image and push it to a container registry
+____________________________
 
-docker build -t nodejs .
+Steps to Install Prometheus:
+____________________________
 
-Runs the nodejs image in a detached mode (-d), mapping port 3000 inside the container to port 3000 on the host (-p 3000:3000)
+Add Prometheus Helm repository: 
 
-docker run -p 3000:3000 nodejs
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 
-Create a Deployment named nodejsapp with three replicas running your Node.js application.
+Update Helm repositories: 
 
-kubectl apply -f deployment.yaml
+helm repo update
 
-Use the kubectl apply -f crd.yaml command to apply the CRD YAML to the Kubernetes cluster
+Install Prometheus using Helm: 
 
-kubectl get crd ---> This will list all the CRDs in your cluster, including the newly installed
+helm install prometheus prometheus-community/prometheus
 
-Step 1: Enable Metrics Server
+Expose Prometheus service to access externally: 
 
-Make sure Metrics Server is installed and running in the Kubernetes cluster. If it's not already installed, you can install it using the following command:
+kubectl expose service prometheus-server --type=NodePort --target-port=9090 --name=prometheus-server-ext
 
-kubectl apply -f https://github.com/kubernetes-sigs/metricsserver/releases/latest/download/components.yaml
+Access Prometheus dashboard: 
 
-Step 2: Write HPA Configuration
+minikube service prometheus-server-ext
 
-Write an HPA configuration YAML file defining autoscaling behavior based on CPU or memory usage thresholds.
+_________________________
 
-Step 3: Apply HPA Configuration
+Steps to Install Grafana:
+_________________________
 
-Apply the HPA configuration YAML using the kubectl apply -f myhpa.yaml
+Add Grafana Helm repository: 
 
-Stress Testing
+helm repo add grafana https://grafana.github.io/helm-charts
 
-Step 1: Define Resource Limits
+Update Helm repositories:
 
-Update the Deployment YAML to specify resource requests and limits for CPU and memory.
+helm repo update
 
-Apply the updated Deployment YAML to your Kubernetes cluster:
+Install Grafana using Helm: 
 
-kubectl apply -f updeployment.yaml
+helm install grafana grafana/grafana
 
-Now for stress testing use hey tool:
+Expose Grafana service to access externally: 
 
-for sending 1000 requests with 10 concurrent requests to http://loccalhost:3000
+kubectl expose service grafana --type=NodePort --target-port=3000 --name=grafana-ext
 
-Use command:
+Access Grafana dashboard: 
 
-hey -n 1000 -c 10 http://localhost:3000
+minikube service grafana-ext
+-----------------------------------------------
+To get username and password in Grafana:
 
-Success Criteria:
+Retrieve Grafana secret in default namespace: 
 
-● A functional Kubernetes deployment for the Node.js application.
+kubectl get secret --namespace default grafana -o yaml
 
-● HPA configuration that automatically scales the application based on resource usage.
+Decode the password: 
 
-● Successful execution of the load test with a recorded screencast demonstrating scaling behavior.
+echo "secret code from yaml" | openssl base64 -d ; echo
 
+_______________________________________________
+
+Install Postgres Database on Kubernetes Cluster
+_______________________________________________
+
+Add the Bitnami Helm repository:
+
+helm repo add bitnami https://charts.bitnami.com/bitnami
+
+Installs PostgreSQL on the Kubernetes cluster using Helm, creating a deployment named "postgresql-dev" from the Bitnami PostgreSQL chart:
+
+helm install postgresql-dev bitnami/postgresql
+
+Retrieves the YAML representation of the secret named "postgresql-dev" :
+
+kubectl get secret/postgresql-dev -oyaml
+
+Decodes to reveal the PostgreSQL password
+
+echo Tb2YzCppj8 | base64 -d:
+
+Connect to the PostgreSQL database running on localhost (127.0.0.1) port 5432 using the username "postgres" and the decoded password, allowing interaction with the "postgres" database:
+
+PGPASSWORD="$POSTGRES_PASSWORD" psql --host 127.0.0.1 -U postgres -d postgres -p 5432
+
+----------------------------------
+For Data Persistence:
+
+Deploy the below given deployment yaml in the Kubernetes cluster by using -------> for ex: kubectl apply -f grafana-pv.yaml
+
+(grafana-pv.yaml, grafana-pvc.yaml, prometheus-pv.yaml, prometheus-pvc.yaml, postgres-pv.yaml, postgres-pvc.yaml)
+
+These YAML files are used to provision and manage persistent storage for Grafana, Prometheus, and PostgreSQL deployments in a Kubernetes cluster, ensuring that data persists even if pods are restarted.
